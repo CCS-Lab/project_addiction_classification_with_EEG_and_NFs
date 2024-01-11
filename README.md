@@ -1,4 +1,5 @@
 # Classification of addicition with EEG and clinical data
 
 ## Purpose:
-### Using multimodal input such as EEG (sensor- & source- level) and clinical data, make a explainable and robust model to classify addiction (Game & Alcohol) and healthy subjects
+### The study applied machine learning algorithms to explore to the neuropsychological and neurophysiological aspects of addictions in individuals with internet gaming disorder and alcohol use disorder
+
