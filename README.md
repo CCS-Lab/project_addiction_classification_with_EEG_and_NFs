@@ -1,4 +1,4 @@
-# Classification of bavioral addiction and substance use disorder with EEG and clinical data
+# Classification of behavioral addiction and substance use disorder with EEG and clinical data
 
 
 ## Purpose:
