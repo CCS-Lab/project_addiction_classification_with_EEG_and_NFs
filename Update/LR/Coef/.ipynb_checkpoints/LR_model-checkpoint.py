@@ -13,12 +13,7 @@ warnings.filterwarnings(action='ignore')
 
 
 def data_load(target1, target2):
-    
-    # Setting data dir
-    data_dir= 'data/EEG_ML_data_240111.csv'
-    rsn_dir = 'data/RSN_240111.csv'
-    dmn_dir = 'data/DMN_240111.csv'
-    
+    data_dir='/home/sms1313j/project_EEG_addition_classification/data/EEG_ML_Merged_data_210531.csv'
     df = pd.read_csv(data_dir,  index_col='Unnamed: 0')
     
     # missing data replacement
@@ -42,15 +37,15 @@ def data_load(target1, target2):
             col_name.append(idx)
             
     # DMN & RSN merging
-    salireward = pd.read_csv(rsn_dir)
+    salireward = pd.read_csv("RSN_220412.csv")
     RSNlist = salireward['node'].to_list()
-    dmn = pd.read_csv(dmn_dir)
+    dmn = pd.read_csv("DMN_220530.csv")
     dmnlist = dmn['node'].to_list()
     DMNRSN = dmnlist + RSNlist
     DMNRSN = list(set(DMNRSN))
 
     pie = []
-    for band in ['_D', '_T','_A', '_B', '_G']:
+    for band in ["_D", "_T","_A", "_B", "_G"]:
         for i in DMNRSN:
             pie.append(i+band)
     

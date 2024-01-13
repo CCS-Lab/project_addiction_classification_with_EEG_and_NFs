@@ -6,19 +6,14 @@ from sklearn.model_selection import train_test_split, StratifiedKFold
 from tqdm import tqdm
 import warnings
 from sklearn.metrics import accuracy_score
-from sklearn.linear_model import LogisticRegression
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.svm import LinearSVC
 #ignore warning message
 warnings.filterwarnings(action='ignore')
 
 
-
 def data_load(target1, target2):
-    
-    # Setting data dir
-    data_dir= 'data/EEG_ML_data_240111.csv'
-    rsn_dir = 'data/RSN_240111.csv'
-    dmn_dir = 'data/DMN_240111.csv'
-    
+    data_dir='/home/sms1313j/project_EEG_addition_classification/data/EEG_ML_Merged_data_210531.csv'
     df = pd.read_csv(data_dir,  index_col='Unnamed: 0')
     
     # missing data replacement
@@ -42,15 +37,15 @@ def data_load(target1, target2):
             col_name.append(idx)
             
     # DMN & RSN merging
-    salireward = pd.read_csv(rsn_dir)
+    salireward = pd.read_csv("RSN_220412.csv")
     RSNlist = salireward['node'].to_list()
-    dmn = pd.read_csv(dmn_dir)
+    dmn = pd.read_csv("DMN_220530.csv")
     dmnlist = dmn['node'].to_list()
     DMNRSN = dmnlist + RSNlist
     DMNRSN = list(set(DMNRSN))
 
     pie = []
-    for band in ['_D', '_T','_A', '_B', '_G']:
+    for band in ["_D", "_T","_A", "_B", "_G"]:
         for i in DMNRSN:
             pie.append(i+band)
     
@@ -65,7 +60,7 @@ def data_load(target1, target2):
 
 
 # GridSearch & modelling 
-def LR_model(X, y):
+def SVM_model(X, y):
    
     n_divisions= 100
     clinic_coef_arr={}
@@ -92,14 +87,13 @@ def LR_model(X, y):
 
 
 def cal_perf(X,y,i_division):
-    LR = LogisticRegression(penalty='l1',solver='liblinear')
+    svm = CalibratedClassifierCV(base_estimator=LinearSVC(penalty="l1",max_iter=1e9, dual=False))
     scoring={'Deviance':'neg_log_loss'}
-    grid=[{'C': np.logspace(-1.2,0.3,40)}]
-    grid_cv = GridSearchCV(LR, param_grid=grid, 
+    grid=[{'base_estimator__C': np.logspace(-1.5,0.3,40)}]
+    grid_cv = GridSearchCV(svm, param_grid=grid, 
                            cv=StratifiedKFold(n_splits=10,shuffle=True,
                                               random_state=i_division), 
-                           n_jobs=40, scoring=scoring,refit='Deviance')
-    
+                           n_jobs=20, scoring=scoring,refit='Deviance')
 
     #standardize X_train
     Sex=X[['Sex']]
@@ -116,7 +110,7 @@ def cal_perf(X,y,i_division):
     #get clinic coef
     X_clinic_train=X_train_scaled[['Age_', 'Sex', 'IQ', 'BDI', 'BAI', 'Barratt_total']]
     grid_cv.fit(X_clinic_train,y)
-    clinic_coef=grid_cv.best_estimator_.coef_[0]
+    clinic_coef=grid_cv.best_estimator_.calibrated_classifiers_[0].base_estimator.coef_[0]
     clinic_col_list=X_clinic_train.columns.tolist()
 
     clinic_i_division_train_acc=accuracy_score(y,grid_cv.predict(X_clinic_train))
@@ -125,7 +119,7 @@ def cal_perf(X,y,i_division):
     #get EEG coef
     X_EEG_train=X_train_scaled.drop(labels=['Age_', 'Sex', 'IQ', 'BDI', 'BAI', 'Barratt_total'],axis=1)
     grid_cv.fit(X_EEG_train,y)
-    EEG_coef=grid_cv.best_estimator_.coef_[0]
+    EEG_coef=grid_cv.best_estimator_.calibrated_classifiers_[0].base_estimator.coef_[0]
     EEG_col_list=X_EEG_train.columns.tolist()
 
 
